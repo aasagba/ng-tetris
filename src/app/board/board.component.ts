@@ -1,0 +1,90 @@
+import { GameService } from './../game.service';
+import { KEY } from './../constants';
+import { PieceComponent, IPiece } from './../piece/piece.component';
+import { BLOCK_SIZE, ROWS, COLS } from '../constants';
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+
+@Component({
+  selector: 'app-game-board',
+  templateUrl: './board.component.html',
+  styleUrls: ['./board.component.css']
+})
+export class BoardComponent implements OnInit {
+  // Get reference to the canvas
+  @ViewChild('board')
+  canvas: ElementRef<HTMLCanvasElement>;
+
+  board: number[][];
+  ctx: CanvasRenderingContext2D;
+  piece: PieceComponent;
+  points: number = 0;
+  lines: number = 0;
+  level: number = 0;
+  moves = {
+    [KEY.LEFT]: (p: IPiece): IPiece => ({ ...p, x: p.x - 1 }),
+    [KEY.RIGHT]: (p: IPiece): IPiece => ({ ...p, x: p.x + 1 }),
+    [KEY.DOWN]: (p: IPiece): IPiece => ({ ...p, y: p.y + 1 }),
+    [KEY.SPACE]: (p: IPiece): IPiece => ({ ...p, y: p.y + 1 })
+  };
+
+  constructor(private service: GameService) {}
+
+  @HostListener('window:keydown', ['$event'])
+  keyEvent(event: KeyboardEvent) {
+    console.log(event.keyCode);
+    if (this.moves[event.keyCode]) {
+      // If the keyCode exists in our moves stop the event from bubbling.
+      event.preventDefault();
+      const keyCode = event.keyCode;
+      // Get the next state of the piece.
+      let p = this.moves[keyCode](this.piece);
+
+      if (event.keyCode === KEY.SPACE) {
+        // Hard drop
+        while (this.service.valid(p, this.board)) {
+          this.piece.move(p);
+          p = this.moves[KEY.DOWN](this.piece);
+        }
+      }
+      // Move the piece.
+      else if (this.service.valid(p, this.board)) {
+        this.piece.move(p);
+      }
+
+      // Clear the old position before drawing.
+      this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+      // Draw the new position.
+      this.piece.draw();
+    }
+  }
+
+  ngOnInit() {
+    this.initBoard();
+  }
+
+  public getEmptyBoard(): number[][] {
+    return Array.from({ length: ROWS },
+      () => Array(COLS).fill(0));
+  }
+
+  public initBoard(): void {
+    // Get the 2D context that we draw on.
+    this.ctx = this.canvas.nativeElement.getContext('2d');
+
+    // Calculate size of canvas from constants.
+    this.ctx.canvas.width = COLS * BLOCK_SIZE;
+    this.ctx.canvas.height = ROWS * BLOCK_SIZE;
+
+    // scale so we don't need to give size on every draw.
+    this.ctx.scale(BLOCK_SIZE, BLOCK_SIZE);
+  }
+
+  public play(): void {
+    this.board = this.getEmptyBoard();
+    this.piece = new PieceComponent(this.ctx);
+    this.piece.draw();
+    console.table(this.board);
+  }
+
+}
