@@ -50,6 +50,7 @@ export class PieceComponent implements OnInit, IPiece {
   public move(p: IPiece): void {
     this.x = p.x;
     this.y = p.y;
+    this.shape = p.shape;
   }
 
 }

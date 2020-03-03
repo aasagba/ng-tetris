@@ -24,7 +24,8 @@ export class BoardComponent implements OnInit {
     [KEY.LEFT]: (p: IPiece): IPiece => ({ ...p, x: p.x - 1 }),
     [KEY.RIGHT]: (p: IPiece): IPiece => ({ ...p, x: p.x + 1 }),
     [KEY.DOWN]: (p: IPiece): IPiece => ({ ...p, y: p.y + 1 }),
-    [KEY.SPACE]: (p: IPiece): IPiece => ({ ...p, y: p.y + 1 })
+    [KEY.SPACE]: (p: IPiece): IPiece => ({ ...p, y: p.y + 1 }),
+    [KEY.UP]: (p: IPiece): IPiece => this.service.rotate(p),
   };
 
   constructor(private service: GameService) {}
@@ -45,9 +46,7 @@ export class BoardComponent implements OnInit {
           this.piece.move(p);
           p = this.moves[KEY.DOWN](this.piece);
         }
-      }
-      // Move the piece.
-      else if (this.service.valid(p, this.board)) {
+      } else if (this.service.valid(p, this.board)) {
         this.piece.move(p);
       }
 
