@@ -1,3 +1,4 @@
+import { COLORS, SHAPES } from './../constants';
 import { Component, OnInit } from '@angular/core';
 
 export interface IPiece {
@@ -26,8 +27,9 @@ export class PieceComponent implements OnInit, IPiece {
   }
 
   public spawn(): void {
-    this.color = 'blue';
-    this.shape = [[2, 0, 0], [2, 2, 2], [0, 0, 0]];
+    const typeId = this.randomiseTetrominoType(COLORS.length - 1);
+    this.color = COLORS[typeId];
+    this.shape = SHAPES[typeId];
 
     // position where the shape spawns.
     this.x = 3;
@@ -51,6 +53,10 @@ export class PieceComponent implements OnInit, IPiece {
     this.x = p.x;
     this.y = p.y;
     this.shape = p.shape;
+  }
+
+  public randomiseTetrominoType(noOfTypes: number): number {
+    return Math.floor(Math.random() * noOfTypes);
   }
 
 }

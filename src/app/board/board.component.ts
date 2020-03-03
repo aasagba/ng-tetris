@@ -20,6 +20,7 @@ export class BoardComponent implements OnInit {
   points: number = 0;
   lines: number = 0;
   level: number = 0;
+  gameStarted: boolean;
   moves = {
     [KEY.LEFT]: (p: IPiece): IPiece => ({ ...p, x: p.x - 1 }),
     [KEY.RIGHT]: (p: IPiece): IPiece => ({ ...p, x: p.x + 1 }),
@@ -80,8 +81,10 @@ export class BoardComponent implements OnInit {
   }
 
   public play(): void {
+    this.gameStarted = true;
     this.board = this.getEmptyBoard();
     this.piece = new PieceComponent(this.ctx);
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.piece.draw();
     console.table(this.board);
   }
