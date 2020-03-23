@@ -8,14 +8,34 @@ import { COLS, ROWS, POINTS } from './constants';
 export class GameService {
 
   public valid(p: IPiece, board: number[][]): boolean {
-    return p.shape.every((row, y) => {
-      return row.every((value, x) =>
-        value === 0 ||    // Empty cell
-        (p.x + x >= 0 &&  // Left wall
-        p.x + x < COLS && // Right wall
-        p.y + y <= ROWS)  // Bottom wall
-      );
+    return p.shape.every((row, dy) => {
+      return row.every((value, dx) => {
+        const x = p.x + dx;
+        const y = p.y + dy;
+        return (
+          this.isEmpty(value) ||
+          (this.insideWalls(x) &&
+            this.aboveFloor(y) &&
+            this.notOccupied(board, x, y))
+        );
+      });
     });
+  }
+
+  public isEmpty(value: number): boolean {
+    return value === 0;
+  }
+
+  public insideWalls(x: number): boolean {
+    return x >= 0 && x < COLS;
+  }
+
+  public aboveFloor(y: number): boolean {
+    return y <= ROWS;
+  }
+
+  public notOccupied(board: number[][], x: number, y: number): boolean {
+    return board[y] && board[y][x] === 0;
   }
 
   rotate(piece: IPiece): IPiece {

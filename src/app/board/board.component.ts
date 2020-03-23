@@ -21,6 +21,7 @@ export class BoardComponent implements OnInit {
   lines: number = 0;
   level: number = 0;
   gameStarted: boolean;
+  time: { start: number; elapsed: number; level: number };
   moves = {
     [KEY.LEFT]: (p: IPiece): IPiece => ({ ...p, x: p.x - 1 }),
     [KEY.RIGHT]: (p: IPiece): IPiece => ({ ...p, x: p.x + 1 }),
@@ -33,7 +34,6 @@ export class BoardComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
-    console.log(event.keyCode);
     if (this.moves[event.keyCode]) {
       // If the keyCode exists in our moves stop the event from bubbling.
       event.preventDefault();
@@ -61,6 +61,7 @@ export class BoardComponent implements OnInit {
 
   ngOnInit() {
     this.initBoard();
+    this.time = { start: 0, elapsed: 0, level: 1000 };
   }
 
   public getEmptyBoard(): number[][] {
@@ -85,8 +86,36 @@ export class BoardComponent implements OnInit {
     this.board = this.getEmptyBoard();
     this.piece = new PieceComponent(this.ctx);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-    this.piece.draw();
+    // this.piece.draw();
+    this.animate();
     console.table(this.board);
+  }
+
+  animate(now: number = 0) {
+    // update elapsed time
+    this.time.elapsed = now - this.time.start;
+    // if elapsed time has passed time for current level
+    if (this.time.elapsed > this.time.level) {
+      // reset start time
+      this.time.start = now;
+      this.drop();
+    }
+    this.draw();
+    requestAnimationFrame(this.animate.bind(this));
+  }
+
+  public drop(): boolean {
+    let p = this.moves[KEY.DOWN](this.piece);
+    if (this.service.valid(p, this.board)) {
+      this.piece.move(p);
+    }
+    return true;
+  }
+
+  public draw(): void {
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    this.piece.draw();
+    // this.drawBoard();
   }
 
 }
