@@ -1,6 +1,6 @@
 import { GameService } from './../game.service';
 import { PieceComponent, IPiece } from './../piece/piece.component';
-import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS } from '../constants';
+import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS, POINTS } from '../constants';
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { RouterEvent } from '@angular/router';
 
@@ -47,11 +47,15 @@ export class BoardComponent implements OnInit {
       if (event.keyCode === KEY.SPACE) {
         // Hard drop
         while (this.service.valid(p, this.board)) {
+          this.points += POINTS.HARD_DROP; // Give points for a drop
           this.piece.move(p);
           p = this.moves[KEY.DOWN](this.piece);
         }
       } else if (this.service.valid(p, this.board)) {
         this.piece.move(p);
+        if (event.keyCode === KEY.DOWN) {
+          this.points += POINTS.SOFT_DROP;
+        }
       }
 
       // Clear the old position before drawing.
@@ -146,16 +150,24 @@ export class BoardComponent implements OnInit {
   }
 
   public clearLines(): void {
+    let lines = 0;
     this.board.forEach((row, y) => {
       // If every value is greater than 0.
       if (row.every(value => value > 0)) {
+        lines++; // increase for cleared line
         // Remove the row.
         this.board.splice(y, 1);
         // Add a zero filled at the top.
         this.board.unshift(Array(COLS).fill(0));
       }
     });
+    if (lines > 0) {
+      // Add points if we cleared some lines
+      this.points += this.service.getLinesClearedPoints(lines);
+    }
   }
+
+
 
   public draw(): void {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
