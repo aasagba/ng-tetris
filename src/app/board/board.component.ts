@@ -132,6 +132,7 @@ export class BoardComponent implements OnInit {
       this.piece.move(p);
     } else {
       this.freeze();
+      this.clearLines();
       if (this.piece.y === 0) {
         // game over
         return false;
@@ -142,6 +143,18 @@ export class BoardComponent implements OnInit {
       this.next.drawNext(this.ctxNext);
     }
     return true;
+  }
+
+  public clearLines(): void {
+    this.board.forEach((row, y) => {
+      // If every value is greater than 0.
+      if (row.every(value => value > 0)) {
+        // Remove the row.
+        this.board.splice(y, 1);
+        // Add a zero filled at the top.
+        this.board.unshift(Array(COLS).fill(0));
+      }
+    });
   }
 
   public draw(): void {
