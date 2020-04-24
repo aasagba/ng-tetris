@@ -6,7 +6,11 @@
       <p>Score: {{ points }}</p>
       <p>Lines: {{ lines }}</p>
       <p>Level: {{ level }}</p>
+      <p>Next Block:</p>
+      <canvas #next class="next"></canvas>
     </div>
-    <button (click)="play()" class="play-button">Play</button>
+    <div class="button-container">
+      <button (click)="play()" class="play-button button">Play</button>
+    </div>
   </div>
 </div>

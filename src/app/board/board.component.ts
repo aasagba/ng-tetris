@@ -1,8 +1,8 @@
 import { GameService } from './../game.service';
-import { KEY } from './../constants';
 import { PieceComponent, IPiece } from './../piece/piece.component';
-import { BLOCK_SIZE, ROWS, COLS } from '../constants';
+import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS } from '../constants';
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { RouterEvent } from '@angular/router';
 
 @Component({
   selector: 'app-game-board',
@@ -13,10 +13,13 @@ export class BoardComponent implements OnInit {
   // Get reference to the canvas
   @ViewChild('board')
   canvas: ElementRef<HTMLCanvasElement>;
-
   board: number[][];
+  @ViewChild('next')
+  canvasNext: ElementRef<HTMLCanvasElement>;
   ctx: CanvasRenderingContext2D;
+  ctxNext: CanvasRenderingContext2D;
   piece: PieceComponent;
+  next: PieceComponent;
   points: number = 0;
   lines: number = 0;
   level: number = 0;
@@ -61,6 +64,7 @@ export class BoardComponent implements OnInit {
 
   ngOnInit() {
     this.initBoard();
+    this.initNext();
     this.time = { start: 0, elapsed: 0, level: 1000 };
   }
 
@@ -81,17 +85,35 @@ export class BoardComponent implements OnInit {
     this.ctx.scale(BLOCK_SIZE, BLOCK_SIZE);
   }
 
+  initNext() {
+    this.ctxNext = this.canvasNext.nativeElement.getContext('2d');
+
+    // Calculate size of canvas from constants.
+    // The + 2 is to allow for space to add the drop shadow to
+    // the "next piece"
+    this.ctxNext.canvas.width = 4 * BLOCK_SIZE + 2;
+    this.ctxNext.canvas.height = 4 * BLOCK_SIZE;
+
+    this.ctxNext.scale(BLOCK_SIZE, BLOCK_SIZE);
+  }
+
   public play(): void {
     this.gameStarted = true;
-    this.board = this.getEmptyBoard();
+    this.resetGame();
+    this.next = new PieceComponent(this.ctx);
     this.piece = new PieceComponent(this.ctx);
+    this.next.drawNext(this.ctxNext);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     // this.piece.draw();
     this.animate();
     console.table(this.board);
   }
 
-  animate(now: number = 0) {
+  public resetGame(): void {
+    this.board = this.getEmptyBoard();
+  }
+
+  public animate(now: number = 0): void {
     // update elapsed time
     this.time.elapsed = now - this.time.start;
     // if elapsed time has passed time for current level
@@ -108,6 +130,16 @@ export class BoardComponent implements OnInit {
     let p = this.moves[KEY.DOWN](this.piece);
     if (this.service.valid(p, this.board)) {
       this.piece.move(p);
+    } else {
+      this.freeze();
+      if (this.piece.y === 0) {
+        // game over
+        return false;
+      }
+      // spawn new piece and update upcoming piece
+      this.piece = this.next;
+      this.next = new PieceComponent(this.ctx);
+      this.next.drawNext(this.ctxNext);
     }
     return true;
   }
@@ -115,7 +147,62 @@ export class BoardComponent implements OnInit {
   public draw(): void {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.piece.draw();
-    // this.drawBoard();
+    this.drawBoard();
+  }
+
+  // merges blocks to the board when at bottom
+  public freeze(): void {
+    this.piece.shape.forEach((row, y) => {
+      row.forEach((value, x) => {
+        if (value > 0) {
+          this.board[y + this.piece.y][x + this.piece.x] = value;
+        }
+      });
+    });
+  }
+
+  public drawBoard(): void {
+    this.board.forEach((row, y) => {
+      row.forEach((value, x) => {
+        if (value > 0) {
+          this.ctx.fillStyle = COLORS[value];
+          this.ctx.fillRect(x, y, 1, 1);
+          this.add3D(x, y, value);
+        }
+      });
+    });
+  }
+
+  private add3D(x: number, y: number, color: number): void {
+    //Darker Color
+    this.ctx.fillStyle = COLORSDARKER[color];
+    // Vertical
+    this.ctx.fillRect(x + .9, y, .1, 1);
+    // Horizontal
+    this.ctx.fillRect(x, y + .9, 1, .1);
+
+    //Darker Color - Inner
+    // Vertical
+    this.ctx.fillRect(x + .65, y + .3, .05, .3);
+    // Horizontal
+    this.ctx.fillRect(x + .3, y + .6, .4, .05);
+
+    // Lighter Color - Outer
+    this.ctx.fillStyle = COLORSLIGHTER[color];
+
+    // Lighter Color - Inner
+    // Vertical
+    this.ctx.fillRect(x + .3, y + .3, .05, .3);
+    // Horizontal
+    this.ctx.fillRect(x + .3, y + .3, .4, .05);
+
+    // Lighter Color - Outer
+    // Vertical
+    this.ctx.fillRect(x, y, .05, 1);
+    this.ctx.fillRect(x, y, .1, .95);
+    // Horizontal
+    this.ctx.fillRect(x, y, 1 , .05);
+    this.ctx.fillRect(x, y, .95, .1);
   }
 
 }
