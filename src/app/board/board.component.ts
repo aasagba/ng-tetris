@@ -1,6 +1,7 @@
+import { LINES_PER_LEVEL } from './../constants';
 import { GameService } from './../game.service';
 import { PieceComponent, IPiece } from './../piece/piece.component';
-import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS, POINTS } from '../constants';
+import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS, POINTS, LEVEL } from '../constants';
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { RouterEvent } from '@angular/router';
 
@@ -114,6 +115,9 @@ export class BoardComponent implements OnInit {
   }
 
   public resetGame(): void {
+    this.points = 0;
+    this.lines = 0;
+    this.level = 0;
     this.board = this.getEmptyBoard();
   }
 
@@ -162,8 +166,15 @@ export class BoardComponent implements OnInit {
       }
     });
     if (lines > 0) {
-      // Add points if we cleared some lines
-      this.points += this.service.getLinesClearedPoints(lines);
+      // calculate points from cleared lines and levels
+      this.points += this.service.getLinesClearedPoints(lines, this.level);
+      this.lines += lines;
+
+      if (this.lines >= LINES_PER_LEVEL) {
+        this.level++;
+        this.lines -= LINES_PER_LEVEL; // reset liness
+        this.time.level = LEVEL[this.level];
+      }
     }
   }
 
