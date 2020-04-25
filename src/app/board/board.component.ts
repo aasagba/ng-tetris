@@ -1,9 +1,10 @@
-import { LINES_PER_LEVEL } from './../constants';
+import { LINES_PER_LEVEL, KEY } from './../constants';
 import { GameService } from './../game.service';
 import { PieceComponent, IPiece } from './../piece/piece.component';
 import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS, POINTS, LEVEL } from '../constants';
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { RouterEvent } from '@angular/router';
+import { ThrowStmt } from '@angular/compiler';
 
 @Component({
   selector: 'app-game-board',
@@ -25,6 +26,8 @@ export class BoardComponent implements OnInit {
   lines: number = 0;
   level: number = 0;
   gameStarted: boolean;
+  paused: boolean;
+  highScore: number;
   requestId: number;
   time: { start: number; elapsed: number; level: number };
   moves = {
@@ -39,7 +42,9 @@ export class BoardComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
-    if (this.moves[event.keyCode]) {
+    if (event.keyCode === KEY.ESC) {
+      this.gameOver();
+    } else if (this.moves[event.keyCode]) {
       // If the keyCode exists in our moves stop the event from bubbling.
       event.preventDefault();
       const keyCode = event.keyCode;
@@ -71,6 +76,8 @@ export class BoardComponent implements OnInit {
   ngOnInit() {
     this.initBoard();
     this.initNext();
+    this.resetGame();
+    this.highScore = 0;
     this.time = { start: 0, elapsed: 0, level: 1000 };
   }
 
@@ -103,6 +110,7 @@ export class BoardComponent implements OnInit {
     this.ctxNext.scale(BLOCK_SIZE, BLOCK_SIZE);
   }
 
+  // create and draw piece
   public play(): void {
     this.gameStarted = true;
     this.resetGame();
@@ -120,11 +128,28 @@ export class BoardComponent implements OnInit {
     console.table(this.board);
   }
 
+  public pause(): void {
+    if (this.gameStarted) {
+      if (this.paused) {
+        this.animate();
+      } else {
+        this.ctx.font = '1px Arial';
+        this.ctx.fillStyle = 'black';
+        this.ctx.fillText('GAME PAUSED', 1.4, 4);
+        cancelAnimationFrame(this.requestId);
+      }
+      this.paused = !this.paused;
+    }
+  }
+
   public resetGame(): void {
     this.points = 0;
     this.lines = 0;
     this.level = 0;
     this.board = this.getEmptyBoard();
+    this.time = { start: 0, elapsed: 0, level: LEVEL[this.level] };
+    this.paused = false;
+    this.addOutLines();
   }
 
   public animate(now: number = 0): void {
@@ -166,6 +191,7 @@ export class BoardComponent implements OnInit {
   public gameOver(): void {
     this.gameStarted = false;
     cancelAnimationFrame(this.requestId);
+    this.highScore = this.points > this.highScore ? this.points : this.highScore;
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(1, 3, 8, 1.2);
     this.ctx.font = '1px Arial';
@@ -227,6 +253,19 @@ export class BoardComponent implements OnInit {
         }
       });
     });
+    this.addOutLines();
+  }
+
+  private addOutLines(): void {
+    for (let index = 1; index < COLS; index++) {
+      this.ctx.fillStyle = 'black';
+      this.ctx.fillRect(index, 0, .025, this.ctx.canvas.height);
+    }
+
+    for (let index = 1; index < ROWS; index++) {
+      this.ctx.fillStyle = 'black';
+      this.ctx.fillRect(0, index, this.ctx.canvas.width, .025);
+    }
   }
 
   private add3D(x: number, y: number, color: number): void {
