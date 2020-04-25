@@ -25,6 +25,7 @@ export class BoardComponent implements OnInit {
   lines: number = 0;
   level: number = 0;
   gameStarted: boolean;
+  requestId: number;
   time: { start: number; elapsed: number; level: number };
   moves = {
     [KEY.LEFT]: (p: IPiece): IPiece => ({ ...p, x: p.x - 1 }),
@@ -110,6 +111,11 @@ export class BoardComponent implements OnInit {
     this.next.drawNext(this.ctxNext);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     // this.piece.draw();
+
+    if (this.requestId) {
+      cancelAnimationFrame(this.requestId);
+    }
+
     this.animate();
     console.table(this.board);
   }
@@ -128,10 +134,13 @@ export class BoardComponent implements OnInit {
     if (this.time.elapsed > this.time.level) {
       // reset start time
       this.time.start = now;
-      this.drop();
+      if (!this.drop()) {
+        this.gameOver();
+        return;
+      }
     }
     this.draw();
-    requestAnimationFrame(this.animate.bind(this));
+    this.requestId = requestAnimationFrame(this.animate.bind(this));
   }
 
   public drop(): boolean {
@@ -142,6 +151,7 @@ export class BoardComponent implements OnInit {
       this.freeze();
       this.clearLines();
       if (this.piece.y === 0) {
+        console.log(`piece === 0`);
         // game over
         return false;
       }
@@ -151,6 +161,16 @@ export class BoardComponent implements OnInit {
       this.next.drawNext(this.ctxNext);
     }
     return true;
+  }
+
+  public gameOver(): void {
+    this.gameStarted = false;
+    cancelAnimationFrame(this.requestId);
+    this.ctx.fillStyle = 'black';
+    this.ctx.fillRect(1, 3, 8, 1.2);
+    this.ctx.font = '1px Arial';
+    this.ctx.fillStyle = 'red';
+    this.ctx.fillText('GAME OVER', 1.8, 4);
   }
 
   public clearLines(): void {
