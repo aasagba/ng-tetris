@@ -1,7 +1,6 @@
-import { LINES_PER_LEVEL, KEY } from './../constants';
 import { GameService } from './../game.service';
 import { PieceComponent, IPiece } from './../piece/piece.component';
-import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS, POINTS, LEVEL } from '../constants';
+import { BLOCK_SIZE, ROWS, COLS, COLORSDARKER, COLORSLIGHTER, KEY, COLORS, POINTS, LEVEL, LINES_PER_LEVEL } from '../constants';
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { RouterEvent } from '@angular/router';
 import { ThrowStmt } from '@angular/compiler';
@@ -43,7 +42,7 @@ export class BoardComponent implements OnInit {
   @HostListener('window:keydown', ['$event'])
   keyEvent(event: KeyboardEvent) {
     if (event.keyCode === KEY.ESC) {
-      this.gameOver();
+      this.pause();
     } else if (this.moves[event.keyCode]) {
       // If the keyCode exists in our moves stop the event from bubbling.
       event.preventDefault();
@@ -117,7 +116,8 @@ export class BoardComponent implements OnInit {
     this.next = new PieceComponent(this.ctx);
     this.piece = new PieceComponent(this.ctx);
     this.next.drawNext(this.ctxNext);
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    this.time.start = performance.now();
+    // this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     // this.piece.draw();
 
     if (this.requestId) {
@@ -218,7 +218,7 @@ export class BoardComponent implements OnInit {
 
       if (this.lines >= LINES_PER_LEVEL) {
         this.level++;
-        this.lines -= LINES_PER_LEVEL; // reset liness
+        this.lines -= LINES_PER_LEVEL; // reset lines
         this.time.level = LEVEL[this.level];
       }
     }
@@ -249,7 +249,7 @@ export class BoardComponent implements OnInit {
         if (value > 0) {
           this.ctx.fillStyle = COLORS[value];
           this.ctx.fillRect(x, y, 1, 1);
-          this.add3D(x, y, value);
+          //this.add3D(x, y, value);
         }
       });
     });
