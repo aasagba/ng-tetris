@@ -136,5 +136,10 @@
       }
     }
   },
-  "defaultProject": "ng-tetris"
+  "defaultProject": "ng-tetris",
+  "schematics": {
+    "@schematics/angular:component": {
+      "styleext": "scss"
+    }
+  }
 }

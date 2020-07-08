@@ -8,7 +8,7 @@ import { ThrowStmt } from '@angular/compiler';
 @Component({
   selector: 'app-game-board',
   templateUrl: './board.component.html',
-  styleUrls: ['./board.component.css']
+  styleUrls: ['./board.component.scss']
 })
 export class BoardComponent implements OnInit {
   // Get reference to the canvas
